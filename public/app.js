@@ -182,9 +182,12 @@ $("unlock-form").addEventListener("submit", async (e) => {
   } finally { btn.disabled = false; btn.textContent = label; }
 });
 
-$("btn-logout").onclick = async () => { await E2E.KeyStore.clear(me); signOut(auth); };
+const doLogout = async () => { $("settings").hidden = true; await E2E.KeyStore.clear(me); signOut(auth); };
+$("btn-logout").onclick = doLogout;
+$("btn-logout-2").onclick = () => { if (confirm("تسجل خروج من هذا الجهاز؟")) doLogout(); };
 $("btn-lock").onclick = async () => {
   if (call?.active) return;
+  $("settings").hidden = true;
   await E2E.KeyStore.clear(me); teardown(); key = null;
   await prepareUnlock().catch(() => {}); show("unlock");
 };
@@ -195,6 +198,8 @@ function teardown() {
   if (rec) cancelRec();
   $("messages").replaceChildren();
   lastDay = "";
+  $("settings").hidden = true;
+  Object.keys(photos).forEach((k) => { if (photos[k]) URL.revokeObjectURL(photos[k]); delete photos[k]; delete photoSig[k]; });
   objectURLs.forEach((u) => URL.revokeObjectURL(u)); objectURLs.length = 0;
 }
 
@@ -202,7 +207,9 @@ function teardown() {
 function startChat() {
   show("chat");
   $("partner-name").textContent = nameOf(partner);
-  ["partner-avatar", "incoming-avatar", "call-avatar"].forEach((id) => ($(id).textContent = initial(partner)));
+  paintAvatars();
+  $("my-name").textContent = nameOf(me);
+  applyWallpaper();
   $("incoming-name").textContent = $("call-name").textContent = nameOf(partner);
   setComposer();
 
@@ -242,6 +249,18 @@ function startChat() {
     paint();
   }));
   const pv = setInterval(paint, 2500); unsubs.push(() => clearInterval(pv));
+
+  // الصور الشخصية (مشفّرة) — بمستند منفصل حتى ما تنسحب مع كل تحديث للحضور
+  [me, partner].forEach((uid) => unsubs.push(onSnapshot(doc(db, "rooms", "main", "profiles", uid), async (s) => {
+    const p = s.data();
+    const sig = p?.photo ? p.photo.slice(0, 64) + p.photo.length : "";
+    if (photoSig[uid] === sig) return;
+    photoSig[uid] = sig;
+    if (photos[uid]) URL.revokeObjectURL(photos[uid]);
+    photos[uid] = null;
+    if (p?.photo) { try { photos[uid] = URL.createObjectURL(new Blob([await E2E.decryptBytes(key, p.photo)], { type: "image/jpeg" })); } catch {} }
+    paintAvatars();
+  }, () => {})));
 
   call = new CallManager({ db, me, partner, key, ice: ICE_SERVERS, ui: callUI });
   call.listen();
@@ -342,6 +361,7 @@ function notify(body) {
   try { if ("Notification" in window && Notification.permission === "granted") new Notification("RM", { body, icon: "icon-192.png", tag: "rm" }); } catch {}
 }
 $("viewer").onclick = () => ($("viewer").hidden = true);
+$("viewer-close").onclick = (e) => { e.stopPropagation(); $("viewer").hidden = true; };
 
 // مشغّل الرسائل الصوتية
 let playing = null;
@@ -535,3 +555,92 @@ $("btn-cam").onclick = () => $("btn-cam").classList.toggle("off", call.toggleCam
 $("btn-flip").onclick = () => call.flipCamera().catch(() => toast("ما گدرت أقلب الكاميرا"));
 $("btn-quality").onclick = () => { const l = call.cycleQuality(); $("quality-label").textContent = l; toast("الجودة: " + l, 1400); };
 window.addEventListener("pagehide", () => { if (call?.active) call.hangup(null); });
+
+
+// ---------- الإعدادات: الصورة الشخصية + الخلفية ----------
+const photos = {}, photoSig = {};
+function setAvatar(el, url, letter) {
+  el.classList.toggle("has-photo", !!url);
+  el.style.backgroundImage = url ? `url("${url}")` : "";
+  const cam = el.querySelector(".cam"), input = el.querySelector("input");
+  el.textContent = url ? "" : letter;
+  if (input) el.prepend(input);
+  if (cam) el.append(cam);
+}
+function paintAvatars() {
+  ["partner-avatar", "incoming-avatar", "call-avatar"].forEach((id) => setAvatar($(id), photos[partner], initial(partner)));
+  setAvatar($("my-avatar"), photos[me], initial(me));
+  $("my-photo-remove").hidden = !photos[me];
+}
+
+$("btn-settings").onclick = () => { if (!call?.active) { $("settings").hidden = false; renderSwatches(); } };
+$("settings-back").onclick = () => ($("settings").hidden = true);
+
+async function squareJPEG(file, size, q) {
+  const src = await loadImage(file);
+  const W = src.naturalWidth || src.width, H = src.naturalHeight || src.height, m = Math.min(W, H);
+  const c = document.createElement("canvas"); c.width = c.height = size;
+  c.getContext("2d").drawImage(src, (W - m) / 2, (H - m) / 2, m, m, 0, 0, size, size);
+  src.close?.();
+  const b = await new Promise((r) => c.toBlob(r, "image/jpeg", q));
+  return new Uint8Array(await b.arrayBuffer());
+}
+$("my-photo-file").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f || !key) return;
+  toast("جاري رفع الصورة…", 1500);
+  try {
+    const data = await E2E.encryptBytes(key, await squareJPEG(f, 320, 0.82));
+    await setDoc(doc(db, "rooms", "main", "profiles", me), { photo: data, updatedAt: serverTimestamp() });
+    toast("تم ✓");
+  } catch (err) {
+    toast(err?.code === "permission-denied" ? "لازم تحدّث قواعد Firestore أولاً" : "ما گدرت أرفع الصورة");
+  }
+});
+$("my-photo-remove").onclick = async () => {
+  if (!confirm("تشيل صورتك؟")) return;
+  try { await setDoc(doc(db, "rooms", "main", "profiles", me), { photo: null, updatedAt: serverTimestamp() }); } catch { toast("ما گدرت"); }
+};
+
+// الخلفية تنحفظ على الجهاز بس (ما تصرف نت)
+const PRESETS = [
+  "radial-gradient(120% 80% at 50% 0%, rgba(201,169,110,.22), transparent 60%), #0b0d12",
+  "linear-gradient(160deg, #1b1426 0%, #0b0d12 70%)",
+  "linear-gradient(160deg, #0f1f1c 0%, #0b0d12 75%)",
+  "linear-gradient(160deg, #241612 0%, #0b0d12 75%)",
+  "radial-gradient(circle at 20% 20%, rgba(227,201,147,.10) 0 2px, transparent 3px) 0 0/22px 22px, #0e1016",
+  "linear-gradient(180deg, #131a2b 0%, #0b0d12 100%)",
+];
+function prefsDB() {
+  return new Promise((res, rej) => { const r = indexedDB.open("rm-prefs", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+}
+async function prefGet(k) { try { const d = await prefsDB(); return await new Promise((res) => { const r = d.transaction("kv").objectStore("kv").get(k); r.onsuccess = () => res(r.result ?? null); r.onerror = () => res(null); }); } catch { return null; } }
+async function prefSet(k, v) { try { const d = await prefsDB(); await new Promise((res) => { const tx = d.transaction("kv", "readwrite"); v == null ? tx.objectStore("kv").delete(k) : tx.objectStore("kv").put(v, k); tx.oncomplete = res; tx.onerror = res; }); } catch {} }
+
+let wallURL = null;
+async function applyWallpaper() {
+  const w = await prefGet("wall");
+  if (wallURL) { URL.revokeObjectURL(wallURL); wallURL = null; }
+  let bg = "";
+  if (w?.type === "image" && w.blob) { wallURL = URL.createObjectURL(w.blob); bg = `linear-gradient(rgba(11,13,18,.45), rgba(11,13,18,.45)), url("${wallURL}") center/cover no-repeat`; }
+  else if (w?.type === "preset") bg = PRESETS[w.i] || "";
+  for (const el of [$("messages"), $("wall-preview")]) { el.style.background = bg; el.classList.toggle("has-wall", !!bg); }
+  document.querySelectorAll(".swatch").forEach((s) => s.classList.toggle("on", w?.type === "preset" && +s.dataset.i === w.i));
+}
+function renderSwatches() {
+  const box = $("swatches");
+  if (!box.childElementCount) PRESETS.forEach((p, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "swatch"; b.dataset.i = i; b.style.background = p;
+    b.onclick = async () => { await prefSet("wall", { type: "preset", i }); applyWallpaper(); };
+    box.append(b);
+  });
+  applyWallpaper();
+}
+$("wall-file").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const bytes = await compressImage(f);
+    await prefSet("wall", { type: "image", blob: new Blob([bytes], { type: "image/jpeg" }) });
+    applyWallpaper(); toast("تم تغيير الخلفية ✓");
+  } catch { toast("ما گدرت أفتح الصورة"); }
+});
+$("wall-remove").onclick = async () => { await prefSet("wall", null); applyWallpaper(); };

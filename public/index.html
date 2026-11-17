@@ -30,6 +30,9 @@
     <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
     <symbol id="i-wave" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
   </svg>
 
@@ -84,7 +87,7 @@
       <div class="actions">
         <button class="icon" id="btn-voice" aria-label="مكالمة صوتية"><svg><use href="#i-phone"/></svg></button>
         <button class="icon" id="btn-video" aria-label="مكالمة فيديو"><svg><use href="#i-video"/></svg></button>
-        <button class="icon dim" id="btn-lock" aria-label="قفل"><svg><use href="#i-lock"/></svg></button>
+        <button class="icon dim" id="btn-settings" aria-label="الإعدادات"><svg><use href="#i-gear"/></svg></button>
       </div>
     </header>
     <div class="e2e-note"><svg><use href="#i-lock"/></svg> مشفّرة من طرف لطرف</div>
@@ -132,7 +135,42 @@
     </div>
   </section>
 
-  <div id="viewer" class="viewer" hidden><img alt=""></div>
+  <!-- الإعدادات -->
+  <section id="settings" class="panel" hidden>
+    <header class="panel-top">
+      <button class="back" id="settings-back" type="button"><svg><use href="#i-back"/></svg><span>رجوع</span></button>
+      <div class="panel-title">الإعدادات</div>
+      <span class="back-spacer"></span>
+    </header>
+    <div class="panel-body">
+      <div class="me-card">
+        <label class="avatar xl" id="my-avatar" aria-label="تغيير الصورة">
+          <input type="file" id="my-photo-file" accept="image/*" hidden>
+          <span class="cam"><svg><use href="#i-camera"/></svg></span>
+        </label>
+        <div class="me-name" id="my-name"></div>
+        <div class="me-hint">صورتك تطلع عند الطرف الثاني، ومشفّرة</div>
+        <button class="link" id="my-photo-remove" type="button" hidden>إزالة الصورة</button>
+      </div>
+
+      <div class="group">
+        <div class="group-title">خلفية المحادثة</div>
+        <div class="wall-preview" id="wall-preview"><div class="wp-bubble in">هلا 🌙</div><div class="wp-bubble out">هلا بيك</div></div>
+        <div class="swatches" id="swatches"></div>
+        <div class="row-btns">
+          <label class="btn"><input type="file" id="wall-file" accept="image/*" hidden>صورة من جهازك</label>
+          <button class="btn ghost" id="wall-remove" type="button">بدون خلفية</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <button class="row" id="btn-lock" type="button"><svg><use href="#i-lock"/></svg><span>قفل التطبيق</span></button>
+        <button class="row danger-text" id="btn-logout-2" type="button"><svg><use href="#i-x"/></svg><span>تسجيل خروج</span></button>
+      </div>
+    </div>
+  </section>
+
+  <div id="viewer" class="viewer" hidden><button class="viewer-close" id="viewer-close" type="button" aria-label="سد"><svg><use href="#i-x"/></svg></button><img alt=""></div>
   <div id="toast" class="toast" hidden></div>
 
   <script type="module" src="app.js"></script>

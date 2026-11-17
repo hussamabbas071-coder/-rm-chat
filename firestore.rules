@@ -27,6 +27,11 @@ service cloud.firestore {
       allow read, write: if allowed();
     }
 
+    match /rooms/main/profiles/{uid} {
+      allow read: if allowed();
+      allow write: if allowed() && uid == request.auth.uid;
+    }
+
     match /rooms/main/presence/{uid} {
       allow read: if allowed();
       allow write: if allowed() && uid == request.auth.uid;
