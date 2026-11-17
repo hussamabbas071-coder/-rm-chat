@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com; img-src 'self' blob: data:; media-src 'self' blob:; frame-src https://*.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RM">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=Cormorant+Garamond:wght@500&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <title>RM</title>
+</head>
+<body>
+  <svg class="sprite" width="0" height="0" aria-hidden="true">
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v4"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
+    <symbol id="i-flip" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  </svg>
+
+  <!-- شاشة البداية -->
+  <section id="splash" class="screen gate splash">
+    <img class="logo" src="icon-192.png" alt="">
+    <div class="loader"></div>
+  </section>
+
+  <!-- تسجيل الدخول -->
+  <section id="login" class="screen gate" hidden>
+    <div class="gate-card">
+      <img class="logo" src="icon-192.png" alt="">
+      <h1 class="brand">RM</h1>
+      <p class="sub">مساحة خاصة بينكم بس</p>
+      <form id="login-form" autocomplete="on">
+        <label><span>الإيميل</span><input id="email" type="email" inputmode="email" autocomplete="username" required dir="ltr"></label>
+        <label><span>كلمة السر</span><input id="password" type="password" autocomplete="current-password" required dir="ltr"></label>
+        <button class="primary" type="submit">دخول</button>
+        <p id="login-error" class="error" role="alert"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- فتح التشفير -->
+  <section id="unlock" class="screen gate" hidden>
+    <div class="gate-card">
+      <div class="mark"><svg><use href="#i-lock"/></svg></div>
+      <h1>كلمة سر التشفير</h1>
+      <p class="sub" id="unlock-sub">نفس الكلمة عندك وعند الطرف الثاني. ما تنحفظ بأي سيرفر، وبدونها الرسائل ما تنقرا.</p>
+      <form id="unlock-form">
+        <label><span>كلمة سر التشفير</span><input id="passphrase" type="password" autocomplete="off" required dir="ltr"></label>
+        <label id="confirm-wrap" hidden><span>أعد كتابتها للتأكيد</span><input id="passphrase2" type="password" autocomplete="off" dir="ltr"></label>
+        <label class="check"><input id="remember" type="checkbox" checked><span>احفظها على هذا الجهاز</span></label>
+        <button class="primary" type="submit">فتح</button>
+        <p id="unlock-error" class="error" role="alert"></p>
+      </form>
+      <button id="btn-logout" class="link" type="button">تسجيل خروج</button>
+    </div>
+  </section>
+
+  <!-- الدردشة -->
+  <section id="chat" class="screen" hidden>
+    <header class="topbar">
+      <div class="who">
+        <div class="avatar" id="partner-avatar"></div>
+        <div>
+          <div class="name" id="partner-name"></div>
+          <div class="status" id="partner-status"></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="icon" id="btn-voice" aria-label="مكالمة صوتية"><svg><use href="#i-phone"/></svg></button>
+        <button class="icon" id="btn-video" aria-label="مكالمة فيديو"><svg><use href="#i-video"/></svg></button>
+        <button class="icon dim" id="btn-lock" aria-label="قفل"><svg><use href="#i-lock"/></svg></button>
+      </div>
+    </header>
+    <div class="e2e-note"><svg><use href="#i-lock"/></svg> مشفّرة من طرف لطرف</div>
+    <main id="messages" class="messages" aria-live="polite"></main>
+    <form id="composer" class="composer">
+      <label class="icon attach" id="attach" aria-label="صورة"><svg><use href="#i-image"/></svg><input id="file" type="file" accept="image/*" hidden></label>
+      <textarea id="text" rows="1" placeholder="اكتب رسالة…" autocomplete="off" dir="auto"></textarea>
+      <div class="rec" id="rec" hidden>
+        <button type="button" class="icon dim" id="rec-cancel" aria-label="إلغاء"><svg><use href="#i-x"/></svg></button>
+        <span class="rec-dot"></span><span class="rec-time" id="rec-time">0:00</span>
+        <span class="rec-hint">جاري التسجيل…</span>
+      </div>
+      <button class="send" id="btn-send" type="submit" aria-label="إرسال" hidden><svg class="flip"><use href="#i-send"/></svg></button>
+      <button class="send" id="btn-mic" type="button" aria-label="رسالة صوتية"><svg><use href="#i-mic"/></svg></button>
+    </form>
+  </section>
+
+  <!-- مكالمة واردة -->
+  <section id="incoming" class="incoming" hidden>
+    <div class="pulse"><div class="avatar big" id="incoming-avatar"></div></div>
+    <div class="incoming-name" id="incoming-name"></div>
+    <div class="incoming-type" id="incoming-type"></div>
+    <div class="incoming-actions">
+      <button id="btn-decline" class="round danger" aria-label="رفض"><svg class="hang"><use href="#i-phone"/></svg></button>
+      <button id="btn-accept" class="round ok" aria-label="رد"><svg><use href="#i-phone"/></svg></button>
+    </div>
+  </section>
+
+  <!-- شاشة المكالمة -->
+  <section id="call" class="call" hidden>
+    <video id="remote-video" autoplay playsinline></video>
+    <div class="call-avatar"><div class="avatar big" id="call-avatar"></div></div>
+    <video id="local-video" autoplay playsinline muted></video>
+    <div class="call-top">
+      <div class="call-name" id="call-name"></div>
+      <div class="call-status" id="call-status"></div>
+      <div class="call-usage" id="call-usage"></div>
+    </div>
+    <div class="call-controls">
+      <button id="btn-quality" class="round glass" aria-label="الجودة"><svg><use href="#i-wave"/></svg><small id="quality-label"></small></button>
+      <button id="btn-mute" class="round glass" aria-label="كتم"><svg><use href="#i-mic"/></svg></button>
+      <button id="btn-cam" class="round glass video-only" aria-label="الكاميرا"><svg><use href="#i-video"/></svg></button>
+      <button id="btn-flip" class="round glass video-only" aria-label="قلب الكاميرا"><svg><use href="#i-flip"/></svg></button>
+      <button id="btn-hangup" class="round danger" aria-label="إنهاء"><svg class="hang"><use href="#i-phone"/></svg></button>
+    </div>
+  </section>
+
+  <div id="viewer" class="viewer" hidden><img alt=""></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

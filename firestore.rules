@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // بدّل UID_1 و UID_2 بالـ UID الحقيقية للحسابين — غيرهم ما يكدر يقرا أو يكتب أي شي
+    function allowed() {
+      return request.auth != null && request.auth.uid in ['xExlZQ8Jaef8FDA4T2zAkYtBHpI3', 'JHzRvLcgTmXo24mR1l2AAgGATaM2'];
+    }
+
+    match /rooms/main/messages/{id} {
+      allow read: if allowed();
+      allow create: if allowed()
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.type in ['text', 'image', 'audio']
+        && request.resource.data.keys().hasOnly(['from', 'type', 'iv', 'ct', 'data', 'mime', 'dur', 'createdAt']);
+      allow update: if allowed() && resource.data.from != request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt']);
+      allow delete: if allowed() && resource.data.from == request.auth.uid;
+    }
+
+    // مفتاح التحقق: ينكتب مرة وحدة بس وما يتغير (حتى ما ينمسح بالغلط)
+    match /rooms/main/meta/verifier {
+      allow read, create: if allowed();
+      allow update, delete: if false;
+    }
+
+    match /rooms/main/meta/call {
+      allow read, write: if allowed();
+    }
+
+    match /rooms/main/presence/{uid} {
+      allow read: if allowed();
+      allow write: if allowed() && uid == request.auth.uid;
+    }
+
+    match /rooms/main/calls/{callId}/candidates/{cid} {
+      allow read: if allowed();
+      allow create: if allowed() && request.resource.data.from == request.auth.uid;
+    }
+
+    // كل شي ثاني مقفول
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
